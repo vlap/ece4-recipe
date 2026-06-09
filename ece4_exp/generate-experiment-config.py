@@ -130,11 +130,15 @@ def clone_ece4_yml_repo(
     }
 
 def build_cli_overrides(expid, scratch, account, walltime, description):
-    """Build configuration overrides from CLI parameters."""
+    """Build configuration overrides from CLI parameters.
+
+    Note: scratch is NOT included - it should come from user's config file,
+    not be hardcoded in every experiment.
+    """
     overrides = {}
 
-    if scratch:
-        overrides["scratch"] = scratch
+    # scratch is intentionally not added to experiment config
+    # It belongs in the user's config file (~/.config/ece4-exp/defaults.yml)
 
     if expid:
         if "experiment" not in overrides:
