@@ -341,6 +341,32 @@ def load_user_defaults():
     return {}
 
 
+def _print_settings(cyan, nc, repo_owner, repo_branch, hpcarch, expid, account,
+                    walltime, nodes, sim_procs, launcher_kind, launcher_type, user_recipe):
+    print(f"{cyan}============================================================{nc}")
+    print(f" Experiment Configuration Settings")
+    print(f"------------------------------------------------------------")
+    print(f" ECE4 repo owner     : \"{cyan}{repo_owner}{nc}\"")
+    print(f" ECE4 repo branch    : \"{cyan}{repo_branch}{nc}\"")
+    print(f" Platform            : \"{cyan}{hpcarch}{nc}\"")
+    print(f"------------------------------------------------------------")
+    print(f" Experiment ID       : {cyan}{expid or '(not set)'}{nc}")
+    print(f" Account             : {cyan}{account or '(not set)'}{nc}")
+    print(f" Walltime (hours)    : {cyan}{walltime or '(platform default)'}{nc}")
+    print(f"------------------------------------------------------------")
+    if nodes and sim_procs:
+        print(f" Nodes               : {cyan}{nodes}{nc}")
+        print(f" Processors (SIM)    : {cyan}{sim_procs}{nc}")
+    elif sim_procs:
+        print(f" Processors (SIM)    : {cyan}{sim_procs}{nc}")
+    else:
+        print(f" Nodes               : {cyan}{nodes}{nc}")
+    print(f" Launcher kind       : {cyan}{launcher_kind}{nc}")
+    print(f" Launcher type       : {cyan}{launcher_type}{nc}")
+    print(f" Recipe              : {cyan}{user_recipe or '(none)'}{nc}")
+    print(f"{cyan}============================================================{nc}")
+
+
 def run_generate(
     platform=None, launcher=None, kind=None, sim_procs=None, nodes=None,
     recipe=None, repo_owner=None, repo_branch=None,
@@ -402,29 +428,13 @@ def run_generate(
         log_info("Or provide them via CLI flags (--platform, --account, etc.)")
         sys.exit(1)
 
-    from .yaml_util import _get_color
-    cyan = _get_color(COLOR_CYAN)
-    nc   = _get_color(COLOR_NC)
-
-    print(f"{cyan}============================================================{nc}")
-    print(f" Experiment Configuration Settings")
-    print(f"------------------------------------------------------------")
-    print(f" ECE4 repo owner     : \"{cyan}{repo_owner}{nc}\"")
-    print(f" ECE4 repo branch    : \"{cyan}{repo_branch}{nc}\"")
-    print(f" Platform            : \"{cyan}{hpcarch}{nc}\"")
-    print(f"------------------------------------------------------------")
-    print(f" Experiment ID       : {cyan}{expid or '(not set)'}{nc}")
-    print(f" Account             : {cyan}{account or '(not set)'}{nc}")
-    print(f" Walltime (hours)    : {cyan}{walltime or '(platform default)'}{nc}")
-    print(f"------------------------------------------------------------")
-    print(f" Nodes               : {cyan}{nodes or '(from --sim-procs)'}{nc}")
-    print(f" Processors (SIM)    : {cyan}{sim_procs or '(calculated after sync)'}{nc}")
-    print(f" Launcher kind       : {cyan}{launcher_kind}{nc}")
-    print(f" Launcher type       : {cyan}{launcher_type}{nc}")
-    print(f" Recipe              : {cyan}{user_recipe or '(none)'}{nc}")
-    print(f"{cyan}============================================================{nc}")
-
     if info:
+        # For --info, print what we know so far before exiting
+        from .yaml_util import _get_color
+        cyan = _get_color(COLOR_CYAN)
+        nc   = _get_color(COLOR_NC)
+        _print_settings(cyan, nc, repo_owner, repo_branch, hpcarch, expid, account,
+                        walltime, nodes, sim_procs, launcher_kind, launcher_type, user_recipe)
         sys.exit(0)
 
     if os.environ.get("ECE4_SKIP_SYNC"):
@@ -468,10 +478,17 @@ def run_generate(
     # Convert nodes → sim_procs now that we have cpus_per_node
     if nodes and not sim_procs:
         sim_procs = int(nodes) * cpus_per_node
-        log_info(f"Converting {nodes} nodes → {sim_procs} processors ({cpus_per_node} cores/node)")
+    elif sim_procs and not nodes:
+        nodes = int(sim_procs) // cpus_per_node
 
     # qos from user defaults takes precedence over platform default
     qos = user_defaults.get("qos") or qos
+
+    from .yaml_util import _get_color
+    cyan = _get_color(COLOR_CYAN)
+    nc   = _get_color(COLOR_NC)
+    _print_settings(cyan, nc, repo_owner, repo_branch, hpcarch, expid, account,
+                    walltime, nodes, sim_procs, launcher_kind, launcher_type, user_recipe)
 
     output_file = output or (f"{expid}_experiment.yml" if expid else "experiment.yml")
 
