@@ -385,7 +385,9 @@ def run_generate(
     expid         = expid     or user_defaults.get("expid")
     account       = account   or user_defaults.get("account")
     qos           = user_defaults.get("qos")
-    walltime      = walltime  or user_defaults.get("walltime")
+    # walltime comes from CLI only — it's experiment+node-count dependent,
+    # so a single default value in defaults.yml would be wrong
+    # (platform files encode sensible per-experiment-type defaults)
     description   = description or user_defaults.get("description")
 
     if expid and not re.match(r'^[a-zA-Z0-9]{4}$', expid):

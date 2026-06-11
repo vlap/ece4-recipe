@@ -461,7 +461,10 @@ Created by ``ece4-exp setup``. All fields are optional — you only need the one
    # recipe: gcm-sr
    # sim_procs: 1120
 
-**Resolution order**: CLI flags > ``defaults.yml`` > Platform defaults
+**Resolution order**: base config → platform → recipe → ``defaults.yml`` + CLI flags
+
+Walltime belongs in the platform files (per experiment type), not in ``defaults.yml``.
+Use ``--walltime HOURS`` on the CLI when you need to override for a specific run.
 
 User Recipes (``~/.config/ece4-exp/recipes/``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

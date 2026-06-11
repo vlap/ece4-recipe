@@ -134,15 +134,16 @@ qos: {qos}
 # ═══════════════════════════════════════════════════════════
 # Notes
 # ═══════════════════════════════════════════════════════════
-# Walltime: Set automatically per experiment type in platform configs
+# Walltime is set per experiment type in the platform files:
 #   CPLD-SR: 1h, OMIP-SR: 30min, AMIP-SR: 30min, CCCL-SR: 1.5h
-#   Override: ece4-exp generate RECIPE NODES EXPID --walltime HOURS
+# Override on the command line when you need more time:
+#   ece4-exp generate gcm-sr 20 a001 --walltime 4
 #
-# Resolution order: CLI args > this file > platform defaults
+# Merge order: base config → platform → recipe → this file + CLI flags
 #
 # Usage:
 #   ece4-exp generate gcm-sr 10 a001
-#   ece4-exp generate omip-sr 2 o001 --walltime 2
+#   ece4-exp generate omip-sr 2 o001
 #   ece4-exp deploy a001
 """
 

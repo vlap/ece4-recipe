@@ -536,18 +536,17 @@ table {
 <p><strong>YAML overlay system</strong> - configurations merged in order:</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code>1. Base config     (fetched from EC-Earth4 git repo, pinned version)
        ↓
-2. Platform        (node layout, SLURM settings for your HPC)
+2. Platform        (node layout, per-type walltimes, SLURM settings)
        ↓
 3. Recipe          (experiment type: coupled, ocean-only, ...)
        ↓
-4. Your defaults   (~/.config/ece4-exp/defaults.yml)
-       ↓
-5. CLI flags       (per-run overrides)
+4. Your settings   (account, qos from defaults.yml; expid, --walltime from CLI)
        ↓
    Generated config (a001_experiment.yml, ~229 lines)
 </code></pre>
 <p>You only write what's <strong>different from the defaults</strong>.<br />
-The tool handles the rest: node math, platform paths, component config.</p>
+Walltime comes from the platform file per experiment type — override with<br />
+<code>--walltime</code> only when a specific run needs more time.</p>
 <footer>Vladimir Lapin (BSC) | June 2026</footer>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="6" data-paginate="true" data-background-color="#ffffff" data-color="#333" data-header="ece4-exp: EC-Earth4 Made Simple" data-footer="Vladimir Lapin (BSC) | June 2026" data-theme="default" data-style="section {

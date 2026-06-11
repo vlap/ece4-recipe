@@ -119,19 +119,18 @@ ece4-exp generate gcm-sr 10 a001
 ```
 1. Base config     (fetched from EC-Earth4 git repo, pinned version)
        ↓
-2. Platform        (node layout, SLURM settings for your HPC)
+2. Platform        (node layout, per-type walltimes, SLURM settings)
        ↓
 3. Recipe          (experiment type: coupled, ocean-only, ...)
        ↓
-4. Your defaults   (~/.config/ece4-exp/defaults.yml)
-       ↓
-5. CLI flags       (per-run overrides)
+4. Your settings   (account, qos from defaults.yml; expid, --walltime from CLI)
        ↓
    Generated config (a001_experiment.yml, ~229 lines)
 ```
 
 You only write what's **different from the defaults**.
-The tool handles the rest: node math, platform paths, component config.
+Walltime comes from the platform file per experiment type — override with
+`--walltime` only when a specific run needs more time.
 
 ---
 

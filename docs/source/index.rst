@@ -18,23 +18,24 @@ A command-line tool that generates EC-Earth4 experiment configuration files usin
 
 **How it works**:
 
-The tool merges five configuration layers into a single validated YAML file:
+The tool merges four configuration layers into a single validated YAML file:
 
 .. code-block:: text
 
-   1. Base config       (fetched from EC-Earth4 repo, always up-to-date)
+   1. Base config       (fetched from EC-Earth4 repo — the full template)
         ↓
-   2. Platform launcher (node layout, SLURM settings for your HPC)
+   2. Platform launcher (node layout, per-experiment walltimes, SLURM settings)
         ↓
    3. Recipe            (experiment type: GCM, OMIP, AMIP, carbon cycle...)
         ↓
-   4. Your defaults     (~/.config/ece4-exp/defaults.yml)
-        ↓
-   5. CLI flags         (per-run overrides)
+   4. Your settings     (account, qos from defaults.yml; expid, walltime from CLI)
         ↓
    Generated config     (a001_experiment.yml, ready to submit)
 
-Each layer overrides the previous. You only specify what differs from defaults.
+Each layer overrides the previous. Your account and qos come from ``defaults.yml``
+once and are never overridden by platform or recipe. Walltimes are set per
+experiment type in the platform files; override with ``--walltime`` on the CLI
+when a run needs more time.
 
 **Nodes, not processors**: Instead of calculating ``10 nodes × 112 cores/node = 1120``, you just say ``10``. The tool looks up your platform's cores-per-node and does the math.
 
@@ -203,16 +204,18 @@ User defaults are stored in ``~/.config/ece4-exp/defaults.yml``:
    # Optional: Pre-fill recipe so you can omit it on the command line
    # recipe: gcm-sr
 
-Walltime has sensible per-experiment defaults (set in the platform files):
+Walltime is set per experiment type in the platform files:
 
 * CPLD-SR (coupled GCM): 1 hour
 * OMIP-SR (ocean-only): 30 minutes
 * AMIP-SR (atmosphere-only): 30 minutes
 * CCCL-SR (carbon cycle): 1.5 hours
 
-Override with ``--walltime HOURS`` when needed.
+Override with ``--walltime HOURS`` on the CLI when a run needs more time.
+Do not put walltime in ``defaults.yml`` — it depends on experiment type and
+node count, so a single value would be wrong for most runs.
 
-**Resolution order**: CLI flags > User defaults (``defaults.yml``) > Platform defaults
+**Resolution order**: base config → platform → recipe → defaults.yml + CLI flags
 
 Next Steps
 ----------
