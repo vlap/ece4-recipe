@@ -4,8 +4,8 @@
 
 ```bash
 pip install ece4-exp
-ece4-exp setup                    # First-time setup
-ece4-exp generate gcm-sr 1120 a001
+ece4-exp setup                 # First-time setup
+ece4-exp generate gcm-sr 10 a001  # 10 nodes
 ```
 
 ## Quick Start
@@ -18,19 +18,19 @@ pip install ece4-exp
 ece4-exp setup
 
 # 3. Generate experiment
-ece4-exp generate gcm-sr 1120 a001
+ece4-exp generate gcm-sr 10 a001  # 10 nodes = 1120 cores on MareNostrum5
 ```
 
 That's it! You have `a001_experiment.yml` ready to use with EC-Earth4.
 
 ## Common Recipes
 
-| Recipe | Description | Typical Procs (MN5) |
+| Recipe | Description | Typical Nodes (MN5) |
 |--------|-------------|---------------------|
-| `gcm-sr` | Coupled atmosphere-ocean GCM | 1120 (10 nodes) |
-| `omip-sr` | Ocean-only forced by reanalysis | 224 (2 nodes) |
-| `amip-sr` | Atmosphere-only prescribed SST | 896 (8 nodes) |
-| `ccycle-sr` | Carbon cycle coupled | 1120+ |
+| `gcm-sr` | Coupled atmosphere-ocean GCM | 10 nodes (1120 cores) |
+| `omip-sr` | Ocean-only forced by reanalysis | 2 nodes (224 cores) |
+| `amip-sr` | Atmosphere-only prescribed SST | 8 nodes (896 cores) |
+| `ccycle-sr` | Carbon cycle coupled | 10+ nodes |
 
 ## Commands
 
@@ -38,10 +38,10 @@ That's it! You have `a001_experiment.yml` ready to use with EC-Earth4.
 # Setup
 ece4-exp setup                     # Configure platform and account
 
-# Generate
-ece4-exp generate RECIPE PROCS EXPID
-ece4-exp generate gcm-sr 1120 a001
-ece4-exp generate omip-sr 224 o001 --walltime 72
+# Generate (specify nodes, not processors)
+ece4-exp generate RECIPE NODES EXPID
+ece4-exp generate gcm-sr 10 a001     # 10 nodes
+ece4-exp generate omip-sr 2 o001 --walltime 72
 
 # Discovery
 ece4-exp list                      # Show available recipes
@@ -55,25 +55,26 @@ ece4-exp save --expid a001         # Save modifications as new recipe
 
 **Override defaults:**
 ```bash
-ece4-exp generate gcm-sr 1120 a001 --platform ecmwf-hpc2020 --account myproj
+ece4-exp generate gcm-sr 10 a001 --platform ecmwf-hpc2020 --account myproj
 ```
 
 **Custom recipes:**
 ```bash
 # Save your modifications
-ece4-exp generate gcm-sr 1120 test
+ece4-exp generate gcm-sr 10 test
 vim test_experiment.yml            # Make changes
-ece4-exp save --expid test         # Saves to ~/.config/ece4-exp/recipes/test.yml
+ece4-exp save --expid test --recipe gcm-sr
 
 # Reuse your recipe
-ece4-exp generate test 1120 a002
+ece4-exp generate test 10 a002
 ```
 
 **Custom platforms:**
 ```bash
-cp platforms/bsc-marenostrum5.yml ~/.config/ece4-exp/platforms/my-hpc.yml
-vim ~/.config/ece4-exp/platforms/my-hpc.yml  # Adjust node layouts
-ece4-exp generate gcm-sr 1120 a001 --platform my-hpc
+cp $(python3 -c "from ece4_exp import paths; print(paths.PLATFORMS_DIR)")/bsc-marenostrum5.yml \\
+   ~/.config/ece4-exp/platforms/my-hpc.yml
+vim ~/.config/ece4-exp/platforms/my-hpc.yml  # Adjust settings
+ece4-exp generate gcm-sr 10 a001 --platform my-hpc
 ```
 
 ## What It Does

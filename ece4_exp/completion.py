@@ -42,9 +42,9 @@ _ece4_exp_completion() {
                 COMPREPLY=( $(compgen -W "${recipes} gcm-sr omip-sr amip-sr ccycle-sr" -- ${cur}) )
                 return 0
             fi
-            # Positional arg 2: procs (just show common values)
+            # Positional arg 2: nodes (common values)
             if [ $COMP_CWORD -eq 3 ] && [[ ! "${cur}" == -* ]]; then
-                COMPREPLY=( $(compgen -W "224 448 896 1120 2240 4480" -- ${cur}) )
+                COMPREPLY=( $(compgen -W "2 4 8 10 16 20 32 40" -- ${cur}) )
                 return 0
             fi
             # Positional arg 3: expid (no completion, user types)

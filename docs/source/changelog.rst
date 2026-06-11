@@ -3,6 +3,38 @@ Changelog
 
 All notable changes to |ece4exp| are documented here.
 
+Version 1.2.0 (2026-06-11)
+--------------------------
+
+Major UX Improvements
+~~~~~~~~~~~~~~~~~~~~~
+
+* **Nodes-first interface**: Specify nodes instead of processors
+
+  * Old: ``ece4-exp generate gcm-sr 1120 a001`` (must calculate 10 × 112)
+  * New: ``ece4-exp generate gcm-sr 10 a001`` (just say 10 nodes)
+  * Auto-calculates processors based on platform (MN5: 112/node, ECMWF: 128/node)
+  * Backward compatible: ``--sim-procs`` still works
+
+* **Simplified documentation**: 50% reduction (2253 → 1214 lines)
+
+  * Merged 7 doc files → 2 (index.rst + reference.rst)
+  * All commands with use cases and examples
+  * Clear, concise, focused on getting started
+  * Old docs preserved in docs/source/old-docs/
+
+Improvements
+~~~~~~~~~~~~
+
+* Updated README with nodes-first examples
+* Enhanced completion with node suggestions (2, 4, 8, 10, 16, 20, 32, 40)
+* Better error messages showing nodes instead of processors
+* Comprehensive command reference with real-world use cases
+
+**Installation**: ``pip install --upgrade ece4-exp``
+
+**Migration**: No breaking changes - old style still works!
+
 Version 1.1.2 (2026-06-11)
 --------------------------
 

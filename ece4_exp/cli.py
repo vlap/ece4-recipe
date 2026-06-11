@@ -117,12 +117,68 @@ def cmd_setup(args):
 def cmd_generate(args):
     """Generate experiment configuration."""
     import re
-    from .yaml_util import set_quiet_mode
+    from .yaml_util import set_quiet_mode, load_yaml_config
 
     # Merge positional and flag arguments (backward compat)
     recipe = args.recipe or getattr(args, 'recipe_flag', None)
-    sim_procs = args.procs or getattr(args, 'sim_procs_flag', None)
+    nodes = getattr(args, 'nodes', None)
+    sim_procs = getattr(args, 'sim_procs_flag', None)
+    nodes_flag = getattr(args, 'nodes_flag', None)
     expid = args.expid or getattr(args, 'expid_flag', None)
+
+    # Determine if user provided nodes or sim_procs
+    if nodes is not None:
+        # New approach: nodes provided as positional arg
+        # Convert nodes → sim_procs based on platform
+        if not args.platform:
+            # Load platform from user defaults
+            try:
+                defaults = load_yaml_config(paths.USER_DEFAULTS_FILE)
+                platform = defaults.get('platform')
+            except:
+                platform = None
+        else:
+            platform = args.platform
+
+        # Get cores per node for platform
+        if platform and 'marenostrum' in platform.lower():
+            ppn = 112  # MareNostrum5
+        elif platform and 'ecmwf' in platform.lower():
+            ppn = 128  # ECMWF HPC2020
+        else:
+            # Default to MN5 if unknown
+            ppn = 112
+            if not platform:
+                log_warn("No platform configured. Run 'ece4-exp setup' first.")
+                log_info(f"Assuming {ppn} cores/node (MareNostrum5 default)")
+
+        sim_procs = nodes * ppn
+        log_info(f"Converting {nodes} nodes → {sim_procs} processors ({ppn} cores/node)")
+    elif sim_procs is not None:
+        # Old approach: sim_procs provided directly
+        pass
+    elif nodes_flag is not None:
+        # --nodes flag provided
+        # Same conversion as above
+        nodes = nodes_flag
+        if not args.platform:
+            try:
+                defaults = load_yaml_config(paths.USER_DEFAULTS_FILE)
+                platform = defaults.get('platform')
+            except:
+                platform = None
+        else:
+            platform = args.platform
+
+        if platform and 'marenostrum' in platform.lower():
+            ppn = 112
+        elif platform and 'ecmwf' in platform.lower():
+            ppn = 128
+        else:
+            ppn = 112
+        sim_procs = nodes * ppn
+    else:
+        sim_procs = None
 
     # Normalize recipe name (allow "gcm-sr" or "gcm-sr.yml")
     if recipe and not recipe.endswith(('.yml', '.yaml')):
@@ -139,16 +195,20 @@ def cmd_generate(args):
     if not recipe or not sim_procs or not expid:
         missing = []
         if not recipe: missing.append("RECIPE")
-        if not sim_procs: missing.append("PROCS")
+        if not sim_procs: missing.append("NODES")
         if not expid: missing.append("EXPID")
 
         log_error(f"Missing required arguments: {', '.join(missing)}")
         print(f"\n{COLOR_GREEN}Usage:{COLOR_NC}")
-        print(f"  ece4-exp generate RECIPE PROCS EXPID")
-        print(f"\n{COLOR_GREEN}Example:{COLOR_NC}")
-        print(f"  ece4-exp generate gcm-sr 1120 a001")
+        print(f"  ece4-exp generate RECIPE NODES EXPID")
+        print(f"\n{COLOR_GREEN}Examples:{COLOR_NC}")
+        print(f"  ece4-exp generate gcm-sr 10 a001     # 10 nodes")
+        print(f"  ece4-exp generate omip-sr 2 o001     # 2 nodes")
+        print(f"\n{COLOR_GREEN}What's NODES?{COLOR_NC}")
+        print(f"  Just the number of compute nodes (tool calculates processors)")
+        print(f"  Old style still works: --sim-procs 1120")
         print(f"\n{COLOR_GREEN}First time?{COLOR_NC}")
-        print(f"  Run 'ece4-exp setup' to configure defaults")
+        print(f"  Run 'ece4-exp setup' to configure platform")
         print(f"  Run 'ece4-exp list' to see available recipes")
         sys.exit(1)
 
@@ -299,13 +359,13 @@ def main():
 Examples:
   ece4-exp setup                         # First-time configuration
   ece4-exp list                          # Show available recipes
-  ece4-exp generate gcm-sr 1120 a001     # Generate experiment config
+  ece4-exp generate gcm-sr 10 a001       # Generate experiment config (10 nodes)
   ece4-exp inspect gcm-sr                # View recipe details
 
 Getting Started:
   1. Run 'ece4-exp setup' to configure platform and account
   2. Use 'ece4-exp list' to see available experiment recipes
-  3. Generate configs with 'ece4-exp generate RECIPE PROCS EXPID'
+  3. Generate configs with 'ece4-exp generate RECIPE NODES EXPID'
 
 For detailed help: ece4-exp <command> --help
 Documentation: https://ece4-exp.readthedocs.io
@@ -337,27 +397,30 @@ Documentation: https://ece4-exp.readthedocs.io
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  ece4-exp generate gcm-sr 1120 a001              # Coupled GCM, 10 nodes, ID=a001
-  ece4-exp generate omip-sr 224 o001              # Ocean-only, 2 nodes
-  ece4-exp generate amip-sr 896 atm1 --walltime 72
+  ece4-exp generate gcm-sr 10 a001                # Coupled GCM, 10 nodes, ID=a001
+  ece4-exp generate omip-sr 2 o001                # Ocean-only, 2 nodes
+  ece4-exp generate amip-sr 8 atm1 --walltime 72  # Atmosphere-only, 8 nodes
 
-Typical processor counts for MareNostrum5:
-  gcm-sr:    1120 (10 nodes), 2240 (20 nodes)
-  omip-sr:   224 (2 nodes), 448 (4 nodes)
-  amip-sr:   896 (8 nodes), 1792 (16 nodes)
-  ccycle-sr: 1120+ (depends on configuration)
+The second argument is NODES (not processors):
+  MareNostrum5: 112 cores/node  → 10 nodes = 1120 cores
+  ECMWF HPC2020: 128 cores/node → 10 nodes = 1280 cores
+  Tool auto-calculates processors based on your platform.
+
+Backward compatibility: --sim-procs still works
+  ece4-exp generate gcm-sr --sim-procs 1120 --expid a001
 
 First time? Run 'ece4-exp setup' to configure platform and account.
         """)
 
-    # Positional arguments (NEW)
+    # Positional arguments (NEW - nodes-first approach)
     parser_gen.add_argument("recipe", nargs="?", help="Recipe name (e.g., gcm-sr, gcm-sr.yml)")
-    parser_gen.add_argument("procs", nargs="?", type=int, help="Number of processors")
+    parser_gen.add_argument("nodes", nargs="?", type=int, help="Number of nodes (e.g., 10 for MareNostrum5)")
     parser_gen.add_argument("expid", nargs="?", help="Experiment ID (4 characters)")
 
-    # Also support old --flag style for backward compatibility
+    # Backward compatibility: --sim-procs still works
     parser_gen.add_argument("--recipe", dest="recipe_flag", help=argparse.SUPPRESS)
-    parser_gen.add_argument("--sim-procs", type=int, dest="sim_procs_flag", help=argparse.SUPPRESS)
+    parser_gen.add_argument("--sim-procs", type=int, dest="sim_procs_flag", help="Number of processors (alternative to nodes)")
+    parser_gen.add_argument("--nodes", type=int, dest="nodes_flag", help=argparse.SUPPRESS)
     parser_gen.add_argument("--expid", dest="expid_flag", help=argparse.SUPPRESS)
 
     # Common options
