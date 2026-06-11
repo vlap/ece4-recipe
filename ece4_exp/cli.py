@@ -39,9 +39,13 @@ def cmd_list(args):
 
     # Locations
     print(f"\n{COLOR_GREEN}Locations:{COLOR_NC}")
-    print(f"  User recipes:     {paths.USER_RECIPES_DIR}")
+    user_recipes_status = "(empty)" if not user_recipes else f"({len(user_recipes)} custom)"
+    print(f"  User recipes:     {paths.USER_RECIPES_DIR} {user_recipes_status}")
     print(f"  Built-in recipes: {paths.RECIPES_DIR}")
-    print(f"  User platforms:   {paths.USER_PLATFORMS_DIR}")
+
+    user_platforms = list(paths.USER_PLATFORMS_DIR.glob("*.yml")) if paths.USER_PLATFORMS_DIR.exists() else []
+    user_platforms_status = "(empty)" if not user_platforms else f"({len(user_platforms)} custom)"
+    print(f"  User platforms:   {paths.USER_PLATFORMS_DIR} {user_platforms_status}")
     print(f"  Built-in platforms: {paths.PLATFORMS_DIR}")
 
     print(f"\n{COLOR_GREEN}Usage:{COLOR_NC}")
